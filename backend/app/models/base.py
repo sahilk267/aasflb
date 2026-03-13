@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, JSON, Enum
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, JSON, Enum, Boolean
 from sqlalchemy.orm import relationship, DeclarativeBase
 from datetime import datetime
 import enum
@@ -31,6 +31,15 @@ class Business(Base):
     niche = Column(String)
     target_audience = Column(String)
     tone = Column(String)
+    
+    # Autopilot & Source Fields
+    is_autopilot = Column(Boolean, default=False)
+    website_url = Column(String, nullable=True)
+    specific_page_url = Column(String, nullable=True)
+    category = Column(String, nullable=True)
+    posting_frequency = Column(String, default="1") # e.g., "1", "2", "3", "5"
+    logo_url = Column(String, nullable=True)
+    
     created_at = Column(DateTime, default=datetime.utcnow)
 
     owner = relationship("User", back_populates="businesses")
@@ -50,6 +59,7 @@ class Campaign(Base):
     business_id = Column(Integer, ForeignKey("businesses.id"))
     platform = Column(String)
     content = Column(JSON) # caption, hashtags, etc.
+    content_hash = Column(String, index=True, nullable=True) # For deduplication
     status = Column(Enum(CampaignStatus), default=CampaignStatus.DRAFT)
     scheduled_time = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)

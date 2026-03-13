@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 import logging
 
 # Configure logging
@@ -12,7 +13,7 @@ app = FastAPI(
     version="1.0.0"
 )
 
-from app.routes import auth, business, ai, campaign
+from app.routes import auth, business, ai, campaign, analytics
 
 # CORS configuration
 app.add_middleware(
@@ -23,10 +24,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(auth.router)
-app.include_router(business.router)
-app.include_router(ai.router)
-app.include_router(campaign.router)
+# Static files for local AI images
+import os
+static_path = os.path.join(os.path.dirname(__file__), "static", "generated")
+os.makedirs(static_path, exist_ok=True)
+app.mount("/static/generated", StaticFiles(directory=static_path), name="generated")
+
+app.include_router(auth.router, prefix="/api")
+app.include_router(business.router, prefix="/api")
+app.include_router(ai.router, prefix="/api")
+app.include_router(campaign.router, prefix="/api")
+app.include_router(analytics.router, prefix="/api")
 
 
 

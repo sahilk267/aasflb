@@ -16,6 +16,16 @@ celery_app.conf.update(
     result_serializer="json",
     timezone="UTC",
     enable_utc=True,
+    beat_schedule={
+        'check-scheduled-posts-every-minute': {
+            'task': 'check_scheduled_posts',
+            'schedule': 60.0,
+        },
+        'autopilot-worker-every-4-hours': {
+            'task': 'autopilot_worker',
+            'schedule': 14400.0, # 4 hours
+        },
+    }
 )
 
 if __name__ == "__main__":

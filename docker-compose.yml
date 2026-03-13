@@ -12,10 +12,14 @@ services:
       - redis
     networks:
       - app-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   frontend:
     build: ./frontend
     container_name: autogrowth_frontend
+    ports:
+      - "5173:5173"
     volumes:
       - ./frontend:/app
       - /app/node_modules
@@ -54,6 +58,8 @@ services:
       - redis
     networks:
       - app-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   celery_beat:
     build: ./backend
@@ -69,6 +75,8 @@ services:
       - redis
     networks:
       - app-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   nginx:
     image: nginx:latest
