@@ -201,3 +201,64 @@ def get_image_url(prompt: str) -> str:
     seed = random.randint(1, 1000)
     # Using LoremFlickr for faster, guaranteed loads
     return f"https://loremflickr.com/1024/1024/{tags}/all?lock={seed}"
+
+def generate_video_url(prompt: str) -> str:
+    """
+    Scaffold for local video generation.
+    Initially attempts to connect to a video-enabled Forge/AnimateDiff API.
+    FALLBACK: Returns a high-quality static image if video engine is offline.
+    """
+    import requests
+    import os
+    import uuid
+    import base64
+
+    # 1. Attempt Local Video Generation (AnimateDiff)
+    try:
+        # Forge API with AnimateDiff extension usually exposes /sdapi/v1/txt2img
+        # with 'AnimateDiff' in alwayson_scripts.
+        video_url = "http://host.docker.internal:7860/sdapi/v1/txt2img"
+        payload = {
+            "prompt": prompt,
+            "steps": 10,
+            "width": 320,  # Lower resolution for video stability on iGPU
+            "height": 320,
+            "sampler_name": "Euler a",
+            "alwayson_scripts": {
+                "AnimateDiff": {
+                    "args": [
+                        {
+                            "model": "mm_sd_v15_v2.ckpt", # Standard AnimateDiff motion module
+                            "enable": True,
+                            "video_length": 16, # 16 frames = ~2 seconds at 8fps
+                            "fps": 8,
+                            "loop_number": 0
+                        }
+                    ]
+                }
+            }
+        }
+        
+        # Long timeout for iGPU video generation
+        response = requests.post(video_url, json=payload, timeout=900)
+        if response.status_code == 200:
+            r = response.json()
+            # Forge returns the animated content in the first 'images' element
+            # usually as a GIF if the extension is configured correctly.
+            image_b64 = r['images'][0]
+            
+            filename = f"vid_{uuid.uuid4().hex}.gif"
+            static_dir = os.path.join(os.path.dirname(__file__), "..", "static", "generated")
+            os.makedirs(static_dir, exist_ok=True)
+            file_path = os.path.join(static_dir, filename)
+            
+            with open(file_path, "wb") as f:
+                f.write(base64.b64decode(image_b64))
+            
+            return f"/static/generated/{filename}"
+
+    except Exception as e:
+        print(f"Video Generation Error: {e}. Falling back to static image.")
+
+    # 2. FALLBACK: Reuse image generation logic for a high-quality static placeholder
+    return get_image_url(prompt)
