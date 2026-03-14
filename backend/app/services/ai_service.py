@@ -156,14 +156,14 @@ def get_image_url(prompt: str) -> str:
         sd_url = "http://host.docker.internal:7860/sdapi/v1/txt2img"
         payload = {
             "prompt": prompt,
-            "steps": 20,
-            "width": 1024,
-            "height": 1024,
+            "steps": 10,
+            "width": 512,
+            "height": 512,
             "sampler_name": "Euler a",
             "cfg_scale": 7
         }
         
-        response = requests.post(sd_url, json=payload, timeout=120)
+        response = requests.post(sd_url, json=payload, timeout=300)
         if response.status_code == 200:
             r = response.json()
             # Forge returns images as a list of base64 strings
